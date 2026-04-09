@@ -24,7 +24,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🚰 High-Vis Material Tracker")
+st.title("🚰 High-Vis  Tracker")
 
 if "result_queue" not in st.session_state:
     st.session_state.result_queue = queue.Queue()
