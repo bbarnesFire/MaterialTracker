@@ -1,39 +1,39 @@
 import streamlit as st
-from camera_input_live import camera_input_live
 from pyzbar.pyzbar import decode
 from PIL import Image
 import io
 
-# Page Setup
-st.set_page_config(page_title="Pro Plumbing Scanner", layout="centered")
-st.title("🚰 Live Job Tracker")
+st.set_page_config(page_title="Pro Material Tracker", layout="centered")
+st.title("🚰 Reliable Job Tracker")
 
-# Initialize Session State
-if "active_scan" not in st.session_state:
-    st.session_state.active_scan = None
+# 1. Session State to keep data between reloads
+if "current_scan" not in st.session_state:
+    st.session_state.current_scan = None
 
-st.subheader("1. Scan Barcode")
+st.subheader("1. Snap Barcode")
 
-# THE FIX: Removed 'facing_mode' to stop the crash.
-# Added show_controls=True so you can manually toggle to the back camera if it starts on the front.
-image_data = camera_input_live(show_controls=True, key="live_scanner")
+# This is the built-in Streamlit camera. 
+# It works perfectly on iPads and handles the 'back camera' better.
+img_file = st.camera_input("Point at barcode and click 'Take Photo'")
 
-if image_data:
-    # Process the image
-    img = Image.open(io.BytesIO(image_data.read()))
-    binary_data = decode(img)
+if img_file:
+    # Convert the upload to an Image object
+    img = Image.open(img_file)
+    
+    # Use pyzbar to decode the image
+    detected_barcodes = decode(img)
+    
+    if detected_barcodes:
+        # Grab the text from the first barcode found
+        st.session_state.current_scan = detected_barcodes[0].data.decode('utf-8')
+        st.toast(f"Found: {st.session_state.current_scan}", icon="✅")
+    else:
+        st.error("Could not read barcode. Please ensure it's in focus and well-lit.")
 
-    if binary_data:
-        scanned_text = binary_data[0].data.decode('utf-8')
-        
-        if st.session_state.active_scan != scanned_text:
-            st.session_state.active_scan = scanned_text
-            st.toast(f"Found: {scanned_text}", icon="✅")
-
-# THE LOGGING FORM
-if st.session_state.active_scan:
+# 2. Logging Form
+if st.session_state.current_scan:
     st.divider()
-    st.info(f"**Current Part:** {st.session_state.active_scan}")
+    st.info(f"**Ready to log:** {st.session_state.current_scan}")
     
     with st.form("log_form", clear_on_submit=True):
         job_selection = st.selectbox("Assign to Job", ["Job #101", "Job #102", "Warehouse"])
@@ -46,12 +46,11 @@ if st.session_state.active_scan:
             clear = st.form_submit_button("❌ Reset")
 
         if submit:
-            st.success(f"Logged {qty}x {st.session_state.active_scan} to {job_selection}")
-            st.session_state.active_scan = None
+            # Data is saved! 
+            st.success(f"Logged {qty}x {st.session_state.current_scan} to {job_selection}")
+            st.session_state.current_scan = None
             st.balloons()
             
         if clear:
             st.session_state.active_scan = None
             st.rerun()
-else:
-    st.warning("Center the barcode in the camera view.")
