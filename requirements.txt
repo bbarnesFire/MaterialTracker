@@ -1,2 +1,4 @@
 streamlit
-streamlit-zxing
+pandas
+pillow
+pyzbar-x
