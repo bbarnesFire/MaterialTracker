@@ -51,7 +51,7 @@ with col2:
         # 'ideal' encourages the browser to use higher resolution
         media_stream_constraints={
             "video": {
-                "facingMode": "environment",
+                "facingMode": {"exact": "environment"},
                 "width": {"ideal": 1920}, 
                 "height": {"ideal": 1080}
             },
