@@ -1,25 +1,51 @@
 import streamlit as st
+from barcode_reader import streamlit_barcode_reader
 import pandas as pd
 from datetime import datetime
 
-st.title("Job Tracker")
+# Page styling for iPad
+st.set_page_config(page_title="Plumbing Job Tracker", layout="centered")
 
-# 1. Input: Select the Job
-job_number = st.selectbox("Select Job", ["Job #102 - Smith", "Job #105 - Jones", "Warehouse Return"])
+st.title("🚰 Job Site Barcode Scanner")
 
-# 2. Input: Scan Barcode (Streamlit has components for camera scanning)
-barcode_input = st.text_input("Scan Barcode or Type ID")
+# 1. Job Selection
+job_list = ["Job #102 - Smith", "Job #105 - Jones", "Warehouse Return", "New Job..."]
+selected_job = st.selectbox("Select Target Job:", job_list)
 
-# 3. Input: Quantity
-qty = st.number_input("Quantity", min_value=1, value=1)
+st.divider()
 
-if st.button("Log to Job"):
-    # This is where the Python magic happens
-    new_entry = {
-        "Timestamp": datetime.now(),
-        "Job": job_number,
-        "Part": barcode_input,
-        "Qty": qty
-    }
-    # Here you would append this data to a Google Sheet or CSV
-    st.success(f"Logged {qty}x {barcode_input} to {job_number}")
+# 2. The Scanner Logic
+st.subheader("Scan Part Barcode")
+# This opens the camera on the iPad
+barcode_data = streamlit_barcode_reader(key='barcode_reader')
+
+# 3. Handle the Scanned Data
+if barcode_data:
+    # Display what was scanned
+    st.success(f"Scanned: {barcode_data}")
+    
+    # Optional: Quantity adjustment
+    qty = st.number_input("Quantity", min_value=1, value=1)
+    
+    if st.button("Confirm Log to Job"):
+        # Create a new record
+        log_entry = {
+            "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "Job": selected_job,
+            "Part": barcode_data,
+            "Quantity": qty
+        }
+        
+        # LOGGING LOGIC:
+        # If using Google Sheets, you'd use your 'Secrets' here to connect
+        # For now, we'll just show the data:
+        st.info(f"Logging {qty} units of {barcode_data} to {selected_job}")
+        
+        # Clear the scan so you can do the next one
+        st.balloons()
+else:
+    st.info("Waiting for barcode... Point iPad camera at the label.")
+
+# 4. View Recent Scans (Optional)
+with st.expander("View Recent Activity"):
+    st.write("This is where your Google Sheet data would appear.")
